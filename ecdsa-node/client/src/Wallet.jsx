@@ -1,31 +1,44 @@
 import server from "./server";
+import localWallet from "./LocalWallet";
 
-function Wallet({ address, setAddress, balance, setBalance }) {
-  async function onChange(evt) {
-    const address = evt.target.value;
-    setAddress(address);
-    if (address) {
-      const {
-        data: { balance },
-      } = await server.get(`balance/${address}`);
-      setBalance(balance);
-    } else {
-      setBalance(0);
+function Wallet({user, setUser, balance, setBalance}) {
+    /**
+     * On user selection, update the user account balance.
+     * @param evt the DOM event containing the selected username.
+     */
+    async function onSelectUser(evt) {
+        const selectedUser = evt.target.value;
+        setUser(selectedUser);
+
+        if (selectedUser) {
+            const address = localWallet.getAddress(selectedUser);
+            const {
+                data: {balance},
+            } = await server.get(`balance/0x${address}`);
+            setBalance(balance);
+        } else {
+            setBalance(0);
+        }
     }
-  }
 
-  return (
-    <div className="container wallet">
-      <h1>Your Wallet</h1>
-
-      <label>
-        Wallet Address
-        <input placeholder="Type an address, for example: 0x1" value={address} onChange={onChange}></input>
-      </label>
-
-      <div className="balance">Balance: {balance}</div>
-    </div>
-  );
+    return (
+        <div className="container wallet">
+            <h1>Your Wallet</h1>
+            <label>
+                Wallet Address
+                <select onChange={onSelectUser} value={user}>
+                    <option value="">--- please choose a user wallet ---</option>
+                    {localWallet.USERS.map((u, i) => (
+                        <option key={i} value={u}>
+                            {u}
+                        </option>
+                    ))}
+                </select>
+            </label>
+            <div className="balance">Address: 0x{localWallet.getAddress(user)}</div>
+            <div className="balance">Balance: {balance}</div>
+        </div>
+    );
 }
 
 export default Wallet;
